@@ -5,10 +5,10 @@ class UNet(nn.Module):
     def __init__(self, n_class):
         super(UNet, self).__init__()
         #Encoder
-        #in 572x572x3
+        #in 400x400x3, works for inputs divisible by 16
         self.e1a = nn.Conv2d(3, 64, kernel_size=3, padding=1)
         self.e1b = nn.Conv2d(64, 64, kernel_size=3, padding=1)
-        self.pool1 = nn.MaxPool2d(kernel_size=2, stride=2) #out 286x286x64
+        self.pool1 = nn.MaxPool2d(kernel_size=2, stride=2)
 
         self.e2a = nn.Conv2d(64, 128, kernel_size=3, padding=1)
         self.e2b = nn.Conv2d(128, 128, kernel_size=3, padding=1)
@@ -44,6 +44,11 @@ class UNet(nn.Module):
 
         #Output Layer
         self.out = nn.Conv2d(64, n_class, kernel_size=1)
+
+        # Better initialization for binary segmentation
+        # Bias the output towards negative (predicting background by default)
+        nn.init.xavier_uniform_(self.out.weight)
+        nn.init.constant_(self.out.bias, -2.0)  # Start biased toward 0 (background)
     
     def forward(self, x):
         #Encoder
